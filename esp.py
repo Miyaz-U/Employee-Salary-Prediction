@@ -72,23 +72,52 @@ plt.legend()
 plt.show()
 
 # Save the trained model to a file
-joblib.dump(model, 'salary_prediction_model.pkl')
+#joblib.dump(model, 'salary_prediction_model.pkl')
 
 # Load the saved model
-loaded_model = joblib.load('salary_prediction_model.pkl')
+#loaded_model = joblib.load('salary_prediction_model.pkl')
 
 # Create a DataFrame with the correct column name
-X_new = pd.DataFrame([[5]], columns=['Years of Experience'])
-predicted_salary = model.predict(X_new)
+#X_new = pd.DataFrame([[5]], columns=['Years of Experience'])
+#predicted_salary = model.predict(X_new)
 
-print(f"Predicted Salary for 5 years experience: {predicted_salary[0]:.2f}")
+#print(f"Predicted Salary for 5 years experience: {predicted_salary[0]:.2f}")
 
 # Load model
+#model = joblib.load('salary_prediction_model.pkl')
+
+#st.title("Salary Predictor")
+#experience = st.number_input("Enter Years of Experience:", min_value=0.0, step=0.1)
+
+#if st.button("Predict Salary", key="predict_button"):
+    #prediction = model.predict([[experience]])
+    #st.success(f"Estimated Salary: ₹{prediction[0]:,.2f}")
+
+# Load model and data
 model = joblib.load('salary_prediction_model.pkl')
+data = pd.read_csv("Salary Data.csv")  # Make sure the file is in same folder
+data.dropna(inplace=True)  # Remove rows with NaN
 
-st.title("Salary Predictor")
-experience = st.number_input("Enter Years of Experience:", min_value=0.0, step=0.1)
+# Title
+st.title("Employee Salary Prediction")
 
+# Sidebar Input
+experience = st.number_input("Enter Years of Experience:", min_value=0.0, step=0.1, key="experience_input")
+
+# Predict Button
 if st.button("Predict Salary"):
     prediction = model.predict([[experience]])
     st.success(f"Estimated Salary: ₹{prediction[0]:,.2f}")
+
+# --- Visualization ---
+st.subheader("Salary vs Experience Plot")
+
+# Scatter + Regression Line
+fig, ax = plt.subplots()
+ax.scatter(data['Years of Experience'], data['Salary'], color='blue', label='Actual Data')
+ax.plot(data['Years of Experience'], model.predict(data[['Years of Experience']]), color='red', label='Regression Line')
+ax.set_xlabel("Years of Experience")
+ax.set_ylabel("Salary")
+ax.set_title("Salary vs Years of Experience")
+ax.legend()
+st.pyplot(fig)
