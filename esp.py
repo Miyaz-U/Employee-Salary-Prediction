@@ -153,13 +153,39 @@ st.header("🧾 Enter Employee Details")
 col1, col2 = st.columns(2)
 
 with col1:
-    age = st.number_input("🎂 Age", min_value=1, max_value=65, value=1)
+    age = st.number_input("🎂 Age", min_value=21, max_value=70)
     gender = st.radio("👤 Gender", ["Male", "Female"])
     education_level = st.radio("🎓 Education Level", ["Bachelor's", "Master's", "PhD"])
 
 with col2:
     job_title = st.selectbox("💼 Job Title", original_data['Job Title'].unique())
-    experience = st.number_input("📈 Years of Experience", min_value=0.0, step=0.1)
+    experience = st.number_input("📈 Years of Experience", min_value=0, max_value=40)
+
+# Validate inputs
+if experience >= age:
+    st.error("Experience must be less than Age.", icon="🚫")
+    st.markdown("<hr style='border: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.stop()
+
+if experience > (age - 20):
+    st.error("Experience exceeds the possible limit for given age.", icon="⚠️")
+    st.markdown("<hr style='border: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.stop()
+
+if age < (experience + 18):
+    st.error("Age is inconsistent with the entered experience.", icon="⚠️")
+    st.markdown("<hr style='border: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.stop()
+
+if education_level == 'Master\'s' and age < 23:
+    st.error("Age is too low for a Master's degree.", icon="⚠️")
+    st.markdown("<hr style-'border: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.stop()
+
+if education_level == 'PhD' and age < 26:
+    st.error("Age is too low for a PhD degree.", icon="⚠️")
+    st.markdown("<hr style='border: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.stop()
 
 # Prepare data for prediction
 new_data_dict = {col: 0 for col in model_columns}
@@ -183,9 +209,9 @@ if st.button("🔍 Predict Salary"):
 
 # Display Model Performance
 st.subheader("📊 Model Performance")
-st.write(f"**Mean Absolute Error (MAE):** ${mae:,.2f}")
-st.write(f"**Mean Squared Error (MSE):** ${mse:,.2f}")
-st.write(f"**R-squared (R²):** ${r2:.4f}")
+st.write(f"**Mean Absolute Error (MAE):** {mae:,.2f}")
+st.write(f"**Mean Squared Error (MSE):** {mse:,.2f}")
+st.write(f"**R-squared (R²):** {r2:.4f}")
 
 st.subheader("🧠 Feature Importance")
 coef_df = pd.DataFrame({'Feature': model_columns, 'Coefficient': model.coef_})
@@ -193,6 +219,30 @@ coef_df = coef_df.sort_values(by='Coefficient', key=abs, ascending=False)
 st.bar_chart(coef_df.set_index('Feature'))
 
 # --- Visualization ---
+
+st.subheader("📈 Actual Salary VS Predicted Salary")
+
+# Scatter plot for actual vs predicted salary
+fig, ax = plt.subplots()
+ax.scatter(y_test, y_pred, color='blue', alpha=0.5)
+ax.plot([y.min(), y.max()], [y.min(), y.max()], color='red', linestyle='--', linewidth=2)
+ax.set_xlabel("Actual Salary")
+ax.set_ylabel("Predicted Salary")
+ax.set_title("Actual vs Predicted Salary")
+ax.legend(["Predicted", "Actual"])
+st.pyplot(fig)
+
+# Line plot for actual vs predicted salary
+fig, ax = plt.subplots()
+ax.plot(y_test.reset_index(drop=True), label='Actual Salary', color='blue', marker='o')
+ax.plot(pd.Series(y_pred), label='Predicted Salary', color='red', marker='x')
+ax.set_xlabel("Sample Index")
+ax.set_ylabel("Salary")
+ax.set_title("Actual vs Predicted Salary Over Samples")
+ax.legend()
+st.pyplot(fig)
+
+
 #st.subheader("📉 Salary vs Experience")
 
 # Scatter + Regression Line
