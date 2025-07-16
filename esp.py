@@ -6,7 +6,12 @@ import matplotlib.pyplot as plt
 import joblib
 import streamlit as st
 
-st.set_page_config(page_title="Salary Predictor", layout="centered")
+# Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
+if 'sidebar_state' not in st.session_state:
+    st.session_state.sidebar_state = 'expanded'
+
+# --- Page config ---
+st.set_page_config(page_title="Employee Salary Predictor", layout="wide", initial_sidebar_state=st.session_state.sidebar_state)
 
 st.markdown("""
     <style>
@@ -124,7 +129,36 @@ joblib.dump(X.columns.tolist(), 'model_columns.pkl')
     #st.success(f"Estimated Salary: ₹{prediction[0]:,.2f}")
 
 # --- Streamlit App ---
-st.set_page_config(page_title="Employee Salary Predictor", layout="centered")
+#st.set_page_config(page_title="Employee Salary Predictor", layout="centered")
+
+st.markdown('<div class="toggle-sidebar-btn">', unsafe_allow_html=True)
+
+if st.button('🔄 Toggle Sidebar', key='toggle_sidebar'):
+    st.session_state.sidebar_state = 'collapsed' if st.session_state.sidebar_state == 'expanded' else 'expanded'
+    st.rerun()
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
+    st.title("💼 Employee Salary Predictor")
+    st.markdown("""
+    AI-powered salary estimation tool based on:
+    - Age
+    - Gender
+    - Education Level
+    - Job Title
+    - Years of Experience
+    """)
+    #st.markdown("[📂 View Dataset](#)", unsafe_allow_html=True)
+    #st.markdown("[💻 GitHub Repository](#)", unsafe_allow_html=True)
+    st.markdown("---")
+    st.subheader("📊 Model Performance")
+    st.write(f"**Selected Model:** {model}")
+    st.write(f"**MAE:** {mae:,.2f}")
+    st.write(f"**MSE:** {mse:,.2f}")
+    st.write(f"**R²:** {r2:.4f}")
+    st.info("Adjust inputs on the main page to see predictions!")
 
 # Hide Streamlit default UI
 st.markdown("""
