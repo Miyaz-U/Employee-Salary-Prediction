@@ -6,12 +6,8 @@ import matplotlib.pyplot as plt
 import joblib
 import streamlit as st
 
-# Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
-if 'sidebar_state' not in st.session_state:
-    st.session_state.sidebar_state = 'expanded'
-
 # --- Page config ---
-st.set_page_config(page_title="Employee Salary Predictor", layout="wide", initial_sidebar_state=st.session_state.sidebar_state)
+st.set_page_config(page_title="Employee Salary Predictor", layout="wide")
 
 st.markdown("""
     <style>
@@ -131,14 +127,6 @@ joblib.dump(X.columns.tolist(), 'model_columns.pkl')
 # --- Streamlit App ---
 #st.set_page_config(page_title="Employee Salary Predictor", layout="centered")
 
-st.markdown('<div class="toggle-sidebar-btn">', unsafe_allow_html=True)
-
-if st.button('🔄 Toggle Sidebar', key='toggle_sidebar'):
-    st.session_state.sidebar_state = 'collapsed' if st.session_state.sidebar_state == 'expanded' else 'expanded'
-    st.rerun()
-
-st.markdown('</div>', unsafe_allow_html=True)
-
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
     st.title("💼 Employee Salary Predictor")
@@ -154,20 +142,11 @@ with st.sidebar:
     #st.markdown("[💻 GitHub Repository](#)", unsafe_allow_html=True)
     st.markdown("---")
     st.subheader("📊 Model Performance")
-    st.write(f"**Selected Model:** {model}")
-    st.write(f"**MAE:** {mae:,.2f}")
-    st.write(f"**MSE:** {mse:,.2f}")
-    st.write(f"**R²:** {r2:.4f}")
+    st.write(f"**Selected Model:** {model.__class__.__name__}")
+    st.write(f"**Mean Absolute Error (MAE):** {mae:,.2f}")
+    st.write(f"**Mean Squared Error (MSE):** {mse:,.2f}")
+    st.write(f"**R-squared (R²):** {r2:.4f}")
     st.info("Adjust inputs on the main page to see predictions!")
-
-# Hide Streamlit default UI
-st.markdown("""
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
 
 # Header Section
 st.markdown("""
@@ -187,13 +166,13 @@ st.header("🧾 Enter Employee Details")
 col1, col2 = st.columns(2)
 
 with col1:
-    age = st.number_input("🎂 Age", min_value=21, max_value=70)
+    age = st.slider("👶 Age", min_value=18, max_value=65, value=30, step=1)
     gender = st.radio("👤 Gender", ["Male", "Female"])
     education_level = st.radio("🎓 Education Level", ["Bachelor's", "Master's", "PhD"])
 
 with col2:
     job_title = st.selectbox("💼 Job Title", original_data['Job Title'].unique())
-    experience = st.number_input("📈 Years of Experience", min_value=0, max_value=40)
+    experience = st.slider("🕒 Years of Experience", min_value=0, max_value=50, value=5, step=1)
 
 # Validate inputs
 if experience >= age:
@@ -241,40 +220,37 @@ if st.button("🔍 Predict Salary"):
     st.success(f"💰 Estimated Salary: ₹{prediction:,.2f}", icon="📢")
     st.markdown("<hr style='border: 1px solid #eee;'>", unsafe_allow_html=True)
 
-# Display Model Performance
-st.subheader("📊 Model Performance")
-st.write(f"**Mean Absolute Error (MAE):** {mae:,.2f}")
-st.write(f"**Mean Squared Error (MSE):** {mse:,.2f}")
-st.write(f"**R-squared (R²):** {r2:.4f}")
-
-st.subheader("🧠 Feature Importance")
-coef_df = pd.DataFrame({'Feature': model_columns, 'Coefficient': model.coef_})
-coef_df = coef_df.sort_values(by='Coefficient', key=abs, ascending=False)
-st.bar_chart(coef_df.set_index('Feature'))
+with st.expander("Feature Importance", expanded=False):
+    st.subheader("🧠 Feature Importance")
+    coef_df = pd.DataFrame({'Feature': model_columns, 'Coefficient': model.coef_})
+    coef_df = coef_df.sort_values(by='Coefficient', key=abs, ascending=False)
+    st.bar_chart(coef_df.set_index('Feature'))
 
 # --- Visualization ---
 
-st.subheader("📈 Actual Salary VS Predicted Salary")
+with st.expander("Scatter Plot for Actual vs Predicted Salary", expanded=False):
+    st.subheader("📈 Actual Salary VS Predicted Salary")
+    
+    # Scatter plot for actual vs predicted salary
+    fig, ax = plt.subplots()
+    ax.scatter(y_test, y_pred, color='blue', alpha=0.5)
+    ax.plot([y.min(), y.max()], [y.min(), y.max()], color='red', linestyle='--', linewidth=2)
+    ax.set_xlabel("Actual Salary")
+    ax.set_ylabel("Predicted Salary")
+    ax.set_title("Actual vs Predicted Salary")
+    ax.legend(["Predicted", "Actual"])
+    st.pyplot(fig)
 
-# Scatter plot for actual vs predicted salary
-fig, ax = plt.subplots()
-ax.scatter(y_test, y_pred, color='blue', alpha=0.5)
-ax.plot([y.min(), y.max()], [y.min(), y.max()], color='red', linestyle='--', linewidth=2)
-ax.set_xlabel("Actual Salary")
-ax.set_ylabel("Predicted Salary")
-ax.set_title("Actual vs Predicted Salary")
-ax.legend(["Predicted", "Actual"])
-st.pyplot(fig)
-
-# Line plot for actual vs predicted salary
-fig, ax = plt.subplots()
-ax.plot(y_test.reset_index(drop=True), label='Actual Salary', color='blue', marker='o')
-ax.plot(pd.Series(y_pred), label='Predicted Salary', color='red', marker='x')
-ax.set_xlabel("Sample Index")
-ax.set_ylabel("Salary")
-ax.set_title("Actual vs Predicted Salary Over Samples")
-ax.legend()
-st.pyplot(fig)
+with st.expander("Line Plot for Actual vs Predicted Salary", expanded=False):
+    # Line plot for actual vs predicted salary
+    fig, ax = plt.subplots()
+    ax.plot(y_test.reset_index(drop=True), label='Actual Salary', color='blue', marker='o')
+    ax.plot(pd.Series(y_pred), label='Predicted Salary', color='red', marker='x')
+    ax.set_xlabel("Sample Index")
+    ax.set_ylabel("Salary")
+    ax.set_title("Actual vs Predicted Salary Over Samples")
+    ax.legend()
+    st.pyplot(fig)
 
 
 #st.subheader("📉 Salary vs Experience")
